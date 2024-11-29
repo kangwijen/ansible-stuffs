@@ -1,0 +1,25 @@
+- name: Base System Setup
+  hosts: all
+  become: true
+  tasks:
+    - name: Update and upgrade system packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+      notify:
+        - Reboot if kernel updated
+
+    - name: Install packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - python3
+        - python3-pip
+        - docker.io
+
+  handlers:
+    - name: Reboot if kernel updated
+      ansible.builtin.reboot:
+        reboot_timeout: 300
+
