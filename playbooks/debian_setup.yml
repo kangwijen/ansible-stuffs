@@ -1,0 +1,94 @@
+- name: Base system setup for Debian
+  become: yes
+  tasks:
+    - name: Update and upgrade system packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+      notify:
+        - Reboot
+
+    - name: Install essential tools
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - curl
+        - wget
+        - git
+        - vim
+        - nano
+        - build-essential
+        - zip
+        - unzip
+
+    - name: Install networking tools
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - net-tools
+        - dnsutils
+        - iputils-ping
+        - traceroute
+        - htop
+        
+    - name: Install development tools
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - gcc
+        - g++
+        - make
+        - cmake
+        - python3
+        - python3-pip
+
+    - name: Install DevOps tools
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - ansible
+        - docker.io
+        - docker-compose
+
+    - name: Install Kubernetes dependencies
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg
+    
+    - name: Ensure /etc/apt/keyrings directory exists
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Kubernetes signing key
+      command: curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+    - name: Set permissions for Kubernetes signing key
+      file:
+        path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        mode: '0644'
+
+    - name: Add Kubernetes repository
+      copy:
+        content: 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /'
+        dest: /etc/apt/sources.list.d/kubernetes.list
+        mode: '0644'
+    
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    - name: Install Kubernetes
+      apt:
+        name: kubectl
+        state: present
